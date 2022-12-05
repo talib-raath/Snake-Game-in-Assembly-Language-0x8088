@@ -1,0 +1,766 @@
+     1                                  ;Printing a snake at random position and start moving
+     2                                  [org 0x0100]
+     3 00000000 E9A305                  jmp start
+     4 00000003 0000                    x_pos: dw 0
+     5 00000005 0000                    y_pos: dw 0
+     6 00000007 0000                    foodpos: dw 0
+     7                                  
+     8 00000009 57656C636F6D652074-     welcome: db 'Welcome to Snake Game'
+     9 00000012 6F20536E616B652047-
+    10 0000001B 616D65             
+    11 0000001E 47726F7570204D656D-     GroupMember1: db 'Group Members Talib Husain | 21F-9070 Saad Rehman | 21F-9640 Press Space to continue'
+    12 00000027 626572732054616C69-
+    13 00000030 622048757361696E20-
+    14 00000039 7C203231462D393037-
+    15 00000042 302053616164205265-
+    16 0000004B 686D616E207C203231-
+    17 00000054 462D39363430205072-
+    18 0000005D 657373205370616365-
+    19 00000066 20746F20636F6E7469-
+    20 0000006F 6E7565             
+    21 00000072 57656C636F6D652074-     GameInstuction: db 'Welcome to snake Game Instructions The player uses the arrow keys to move a snake around the board Snake will eat food to increase its size and scores Press any key to continue'
+    22 0000007B 6F20736E616B652047-
+    23 00000084 616D6520496E737472-
+    24 0000008D 756374696F6E732054-
+    25 00000096 686520706C61796572-
+    26 0000009F 207573657320746865-
+    27 000000A8 206172726F77206B65-
+    28 000000B1 797320746F206D6F76-
+    29 000000BA 65206120736E616B65-
+    30 000000C3 2061726F756E642074-
+    31 000000CC 686520626F61726420-
+    32 000000D5 536E616B652077696C-
+    33 000000DE 6C2065617420666F6F-
+    34 000000E7 6420746F20696E6372-
+    35 000000F0 656173652069747320-
+    36 000000F9 73697A6520616E6420-
+    37 00000102 73636F726573205072-
+    38 0000010B 65737320616E79206B-
+    39 00000114 657920746F20636F6E-
+    40 0000011D 74696E7565         
+    41                                  
+    42 00000122 47616D65204F766572      GameOver: db 'Game Over'
+    43 0000012B 30                      currScore: db '0'
+    44 0000012C 53636F72653A20          score: db 'Score: '
+    45 00000133 022A2A2A2A              snake: db 02,'*','*','*','*'
+    46 00000138 0500                    snake_length: dw 5
+    47                                  ;///////////////////////////////////////////////////////////////////////////////////
+    48                                  
+    49                                  ;code to clear the screen
+    50                                  clearscreen:
+    51 0000013A 06                          push es
+    52 0000013B 50                          push ax
+    53 0000013C 57                          push di
+    54 0000013D 51                          push cx
+    55 0000013E B800B8                      mov ax,0xb800 ; video memory address
+    56 00000141 8EC0                        mov es,ax
+    57 00000143 B82007                      mov ax,0x0720 ; color code and space ASCII
+    58 00000146 BF0000                      mov di,0
+    59                                      nextchar:
+    60 00000149 268905                          mov [es:di],ax
+    61 0000014C 81C70200                        add di,2
+    62 00000150 81FFA00F                        cmp di,4000
+    63 00000154 75F3                            jne nextchar
+    64                                  
+    65                                      ;popping all values
+    66 00000156 59                          pop cx
+    67 00000157 5F                          pop di
+    68 00000158 58                          pop ax
+    69 00000159 07                          pop es
+    70 0000015A C3                          ret
+    71                                  ;///////////////////////////////////////////////////////////////////////////////////
+    72                                  welcomeMsg:
+    73 0000015B 50                      	push ax
+    74 0000015C 53                      	push bx
+    75 0000015D 56                      	push si
+    76 0000015E 57                      	push di
+    77 0000015F 06                      	push es
+    78 00000160 51                      	push cx
+    79                                  	
+    80 00000161 B800B8                  	mov ax,0xb800
+    81 00000164 8EC0                    	mov es,ax
+    82 00000166 BF9C04                  	mov di,1180
+    83 00000169 BE[1E00]                	mov si,GroupMember1
+    84 0000016C B95400                  	mov cx,84
+    85 0000016F B404                    	mov ah,0x04
+    86 00000171 FC                      	cld
+    87                                      newchar: 
+    88 00000172 AC                      	lodsb ; load next char in al
+    89 00000173 AB                      	stosw ; print char/attribute pair
+    90                                  
+    91 00000174 81F94700                	cmp cx,71
+    92 00000178 7504                    	jne x
+    93 0000017A 81C77800                	add word di,120
+    94                                  
+    95                                  	x:
+    96 0000017E 81F92F00                	cmp cx,47
+    97 00000182 7504                    	jne y
+    98 00000184 81C77200                	add word di,114
+    99                                  
+   100                                  	y:
+   101 00000188 81F91800                	cmp cx,24
+   102 0000018C 7504                    	jne next
+   103 0000018E 81C71201                	add word di,274
+   104                                  
+   105                                  	next:
+   106 00000192 E2DE                    	loop newchar
+   107                                  
+   108 00000194 59                      	pop cx
+   109 00000195 07                      	pop es
+   110 00000196 5F                      	pop di
+   111 00000197 5E                      	pop si
+   112 00000198 5B                      	pop bx
+   113 00000199 58                      	pop ax
+   114 0000019A C3                          ret
+   115                                  
+   116                                  ;///////////////////////////////////////////////////////////////////////////////////
+   117                                  Instruction:
+   118 0000019B 50                      	push ax
+   119 0000019C 53                      	push bx
+   120 0000019D 56                      	push si
+   121 0000019E 57                      	push di
+   122 0000019F 06                      	push es
+   123 000001A0 51                      	push cx
+   124                                  	
+   125 000001A1 B800B8                  	mov ax,0xb800
+   126 000001A4 8EC0                    	mov es,ax
+   127 000001A6 BF9C04                  	mov di,1180
+   128 000001A9 BE[7200]                	mov si,GameInstuction
+   129 000001AC B9AC00                  	mov cx,172
+   130 000001AF B404                    	mov ah,0x04
+   131                                  
+   132                                      newcharins: 
+   133 000001B1 AC                      	lodsb ; load next char in al
+   134 000001B2 AB                      	stosw ; print char/attribute pair
+   135                                  
+   136 000001B3 81F99800                	cmp cx,152
+   137 000001B7 7504                    	jne x2
+   138 000001B9 81C77800                	add word di,120
+   139                                  
+   140                                  	x2:
+   141 000001BD 81F98A00                	cmp cx,138
+   142 000001C1 7504                    	jne y2
+   143 000001C3 81C77200                	add word di,114
+   144                                  
+   145                                  	y2:
+   146 000001C7 81F95B00                	cmp cx,91
+   147 000001CB 7504                    	jne z2
+   148 000001CD 81C74200                	add word di,66
+   149                                  
+   150                                  	z2:
+   151 000001D1 81F92B00                	cmp cx,43
+   152 000001D5 7504                    	jne a2
+   153 000001D7 81C75000                	add word di,80
+   154                                  
+   155                                  	a2:
+   156 000001DB 81F91700                	cmp cx,23
+   157 000001DF 7504                    	jne next2
+   158 000001E1 81C77800                	add word di,120
+   159                                  
+   160                                  	
+   161                                  	next2:
+   162 000001E5 E2CA                    	loop newcharins
+   163                                  
+   164 000001E7 59                      	pop cx
+   165 000001E8 07                      	pop es
+   166 000001E9 5F                      	pop di
+   167 000001EA 5E                      	pop si
+   168 000001EB 5B                      	pop bx
+   169 000001EC 58                      	pop ax
+   170 000001ED C3                       ret
+   171                                  
+   172                                  ;///////////////////////////////////////////////////////////////////////////////////
+   173                                  draw_snake:
+   174 000001EE 55                          push bp
+   175 000001EF 89E5                        mov bp, sp
+   176 000001F1 50                          push ax
+   177 000001F2 53                          push bx
+   178 000001F3 56                          push si
+   179 000001F4 51                          push cx
+   180 000001F5 52                          push dx
+   181                                  
+   182 000001F6 8B7606                      mov si, [bp + 6]        
+   183 000001F9 B90500                      mov cx, 5        
+   184 000001FC BFDC05                      mov di, 1500
+   185 000001FF B800B8                      mov ax, 0xb800
+   186 00000202 8EC0                        mov es, ax
+   187                                  
+   188 00000204 8B5E04                      mov bx, [bp + 4]
+   189 00000207 B404                        mov ah, 0x04
+   190                                      snake_next_part:
+   191 00000209 8A04                            mov al, [si]
+   192 0000020B 268905                          mov [es:di], ax
+   193 0000020E 893F                            mov [bx], di
+   194 00000210 46                              inc si
+   195 00000211 81C30200                        add bx, 2
+   196                                  
+   197 00000215 81C70200                        add di, 2
+   198 00000219 E2EE                            loop snake_next_part
+   199                                  
+   200 0000021B 5A                          pop dx
+   201 0000021C 59                          pop cx
+   202 0000021D 5E                          pop si
+   203 0000021E 5B                          pop bx
+   204 0000021F 58                          pop ax
+   205 00000220 5D                          pop bp
+   206 00000221 C20600                      ret 6
+   207                                  ;///////////////////////////////////////////////////////////////////////////////////
+   208                                  
+   209                                  printScore:
+   210 00000224 50                          push ax
+   211 00000225 53                          push bx
+   212 00000226 51                          push cx
+   213 00000227 56                          push si
+   214 00000228 57                          push di
+   215 00000229 06                          push es
+   216                                  
+   217 0000022A BE[2C01]                    mov si,score
+   218 0000022D B800B8                      mov ax,0xb800
+   219 00000230 B407                        mov ah,0x07
+   220 00000232 BFA400                      mov di,164
+   221 00000235 B90700                      mov cx,7
+   222                                      p:
+   223 00000238 AC                              lodsb
+   224 00000239 AB                              stosw
+   225 0000023A E2FC                        loop p
+   226 0000023C A0[2B01]                    mov al,[currScore]
+   227 0000023F 268905                      mov [es:di],ax
+   228 00000242 07                          pop es
+   229 00000243 5F                          pop di
+   230 00000244 5E                          pop si
+   231 00000245 59                          pop cx
+   232 00000246 5B                          pop bx
+   233 00000247 58                          pop ax
+   234 00000248 C3                          ret
+   235                                  
+   236                                  
+   237                                  ;////////////////////////////////////////////////////////////////////////////////////
+   238                                  move_snake_left:
+   239 00000249 55                          push bp
+   240 0000024A 89E5                        mov bp, sp
+   241 0000024C 50                          push ax
+   242 0000024D 53                          push bx
+   243 0000024E 51                          push cx
+   244 0000024F 52                          push dx
+   245 00000250 06                          push es
+   246 00000251 57                          push di
+   247 00000252 56                          push si
+   248                                      ;snake_parts colision detection
+   249 00000253 8B5E04                      mov bx, [bp + 4]            
+   250 00000256 8B17                        mov dx, [bx]
+   251                                  
+   252 00000258 8B4E08                      mov cx, [bp + 8]
+   253 0000025B 81EA0200                    sub dx, 2
+   254                                      check_left_colision:
+   255 0000025F 3B17                            cmp dx, [bx]
+   256 00000261 7441                            je no_left_movement
+   257 00000263 81C30200                        add bx, 2
+   258 00000267 E2F6                            loop check_left_colision
+   259                                      left_movement:
+   260 00000269 8B7606                      mov si, [bp + 6]            ;snake 
+   261 0000026C 8B5E04                      mov bx, [bp + 4]            ;snake location
+   262 0000026F 8B17                        mov dx, [bx]
+   263 00000271 81EA0200                    sub dx, 2
+   264 00000275 89D7                        mov di, dx
+   265                                  
+   266 00000277 B800B8                      mov ax, 0xb800
+   267 0000027A 8EC0                        mov es, ax
+   268 0000027C B404                        mov ah, 0x04
+   269 0000027E 8A04                        mov al, [si]
+   270 00000280 268905                      mov [es:di],ax             ;snake head placed
+   271                                  
+   272 00000283 8B4E08                      mov cx, [bp + 8]
+   273 00000286 8B3F                        mov di, [bx]
+   274 00000288 46                          inc si
+   275 00000289 B404                        mov ah, 0x04
+   276 0000028B 8A04                        mov al, [si]
+   277 0000028D 268905                      mov [es:di],ax
+   278                                      left_location_sort:
+   279 00000290 8B07                            mov ax, [bx]
+   280 00000292 8917                            mov [bx], dx
+   281 00000294 89C2                            mov dx, ax
+   282 00000296 81C30200                        add bx, 2
+   283                                          
+   284 0000029A E2F4                            loop left_location_sort
+   285 0000029C 89D7                        mov di, dx
+   286 0000029E B82007                      mov ax, 0x0720
+   287 000002A1 268905                      mov [es:di], ax
+   288                                  
+   289                                      no_left_movement:
+   290 000002A4 5E                          pop si
+   291 000002A5 5F                          pop di
+   292 000002A6 07                          pop es
+   293 000002A7 5A                          pop dx
+   294 000002A8 59                          pop cx
+   295 000002A9 5B                          pop bx
+   296 000002AA 58                          pop ax
+   297 000002AB 5D                          pop bp
+   298 000002AC C20600                      ret 6
+   299                                  
+   300                                  ;///////////////////////////////////////////////////////////////////////////////////
+   301                                  ;SubRoutine for Up movement
+   302                                  move_snake_up:
+   303 000002AF 55                          push bp
+   304 000002B0 89E5                        mov bp, sp
+   305 000002B2 50                          push ax
+   306 000002B3 53                          push bx
+   307 000002B4 51                          push cx
+   308 000002B5 52                          push dx
+   309 000002B6 06                          push es
+   310 000002B7 57                          push di
+   311 000002B8 56                          push si
+   312                                       ;snake_parts colision detection
+   313 000002B9 8B5E04                      mov bx, [bp + 4]            ;snake location
+   314 000002BC 8B17                        mov dx, [bx]
+   315                                  
+   316 000002BE 8B4E08                      mov cx, [bp + 8]
+   317                                  
+   318 000002C1 81EAA000                    sub dx, 160
+   319                                  
+   320                                      check_up_colision:
+   321 000002C5 3B17                            cmp dx, [bx]
+   322 000002C7 7441                            je no_up_movement
+   323 000002C9 81C30200                        add bx, 2
+   324 000002CD E2F6                            loop check_up_colision
+   325                                  
+   326                                      upward_movement:
+   327 000002CF 8B7606                      mov si, [bp + 6]            ;snake 
+   328 000002D2 8B5E04                      mov bx, [bp + 4]            ;snake location
+   329 000002D5 8B17                        mov dx, [bx]
+   330 000002D7 81EAA000                    sub dx, 160
+   331 000002DB 89D7                        mov di, dx
+   332                                  
+   333 000002DD B800B8                      mov ax, 0xb800
+   334 000002E0 8EC0                        mov es, ax
+   335 000002E2 B404                        mov ah, 0x04
+   336 000002E4 8A04                        mov al, [si]
+   337 000002E6 268905                      mov [es:di],ax             ;snake head placed
+   338                                  
+   339 000002E9 8B4E08                      mov cx, [bp + 8]
+   340 000002EC 8B3F                        mov di, [bx]
+   341 000002EE 46                          inc si
+   342 000002EF B404                        mov ah, 0x04
+   343 000002F1 8A04                        mov al, [si]
+   344 000002F3 268905                      mov [es:di],ax
+   345                                      up_location_sort:
+   346 000002F6 8B07                            mov ax, [bx]
+   347 000002F8 8917                            mov [bx], dx
+   348 000002FA 89C2                            mov dx, ax
+   349 000002FC 81C30200                        add bx, 2
+   350                                          
+   351 00000300 E2F4                            loop up_location_sort
+   352                                  
+   353 00000302 89D7                        mov di, dx
+   354 00000304 B82007                      mov ax, 0x0720
+   355 00000307 268905                      mov [es:di], ax
+   356                                      no_up_movement:
+   357 0000030A 5E                          pop si
+   358 0000030B 5F                          pop di
+   359 0000030C 07                          pop es
+   360 0000030D 5A                          pop dx
+   361 0000030E 59                          pop cx
+   362 0000030F 5B                          pop bx
+   363 00000310 58                          pop ax
+   364 00000311 5D                          pop bp
+   365 00000312 C20600                      ret 6
+   366                                  ;///////////////////////////////////////////////////////////////////////////////////
+   367                                  move_snake_down:
+   368 00000315 55                          push bp
+   369 00000316 89E5                        mov bp, sp
+   370 00000318 50                          push ax
+   371 00000319 53                          push bx
+   372 0000031A 51                          push cx
+   373 0000031B 52                          push dx
+   374 0000031C 06                          push es
+   375 0000031D 57                          push di
+   376 0000031E 56                          push si
+   377                                       ;snake_parts colision detection
+   378 0000031F 8B5E04                      mov bx, [bp + 4]            ;snake location
+   379 00000322 8B17                        mov dx, [bx]
+   380                                  
+   381 00000324 8B4E08                      mov cx, [bp + 8]
+   382 00000327 81C2A000                    add dx, 160
+   383                                      check_down_colision:
+   384 0000032B 3B17                            cmp dx, [bx]
+   385 0000032D 7441                            je no_down_movement
+   386 0000032F 81C30200                        add bx, 2
+   387 00000333 E2F6                            loop check_down_colision
+   388                                  
+   389                                      downward_movement:
+   390 00000335 8B7606                      mov si, [bp + 6]            ;snake 
+   391 00000338 8B5E04                      mov bx, [bp + 4]            ;snake location
+   392 0000033B 8B17                        mov dx, [bx]
+   393 0000033D 81C2A000                    add dx, 160
+   394 00000341 89D7                        mov di, dx
+   395                                  
+   396 00000343 B800B8                      mov ax, 0xb800
+   397 00000346 8EC0                        mov es, ax
+   398 00000348 B404                        mov ah, 0x04
+   399 0000034A 8A04                        mov al, [si]
+   400 0000034C 268905                      mov [es:di], ax             ;snake head placed
+   401                                  
+   402 0000034F 8B4E08                      mov cx, [bp + 8]            ;snake length
+   403 00000352 8B3F                        mov di, [bx]
+   404 00000354 46                          inc si
+   405 00000355 B404                        mov ah, 0x04
+   406 00000357 8A04                        mov al, [si]
+   407 00000359 268905                      mov [es:di],ax
+   408                                      down_location_sort:
+   409 0000035C 8B07                            mov ax, [bx]
+   410 0000035E 8917                            mov [bx], dx
+   411 00000360 89C2                            mov dx, ax
+   412 00000362 81C30200                        add bx, 2
+   413 00000366 E2F4                            loop down_location_sort
+   414 00000368 89D7                        mov di, dx
+   415 0000036A B82007                      mov ax, 0x0720
+   416 0000036D 268905                      mov [es:di], ax
+   417                                  
+   418                                      no_down_movement:
+   419 00000370 5E                          pop si
+   420 00000371 5F                          pop di
+   421 00000372 07                          pop es
+   422 00000373 5A                          pop dx
+   423 00000374 59                          pop cx
+   424 00000375 5B                          pop bx
+   425 00000376 58                          pop ax
+   426 00000377 5D                          pop bp
+   427 00000378 C20600                      ret 6
+   428                                  ;///////////////////////////////////////////////////////////////////////////////////
+   429                                  move_snake_right:
+   430 0000037B 55                          push bp
+   431 0000037C 89E5                        mov bp, sp
+   432 0000037E 50                          push ax
+   433 0000037F 53                          push bx
+   434 00000380 51                          push cx
+   435 00000381 52                          push dx
+   436 00000382 06                          push es
+   437 00000383 57                          push di
+   438 00000384 56                          push si
+   439                                      ;snake_parts colision detection
+   440 00000385 8B5E04                      mov bx, [bp + 4]            ;snake location
+   441 00000388 8B17                        mov dx, [bx]
+   442                                  
+   443 0000038A 8B4E08                      mov cx, [bp + 8]
+   444 0000038D 81C20200                    add dx, 2
+   445                                      check_right_colision:
+   446 00000391 3B17                            cmp dx, [bx]
+   447 00000393 7441                            je no_right_movement
+   448 00000395 81C30200                        add bx, 2
+   449 00000399 E2F6                            loop check_right_colision
+   450                                  
+   451                                      right_movement:
+   452 0000039B 8B7606                      mov si, [bp + 6]            ;snake 
+   453 0000039E 8B5E04                      mov bx, [bp + 4]            ;snake location
+   454 000003A1 8B17                        mov dx, [bx]
+   455 000003A3 81C20200                    add dx, 2
+   456 000003A7 89D7                        mov di, dx
+   457                                  
+   458 000003A9 B800B8                      mov ax, 0xb800
+   459 000003AC 8EC0                        mov es, ax
+   460 000003AE B404                        mov ah, 0x04
+   461 000003B0 8A04                        mov al, [si]
+   462 000003B2 268905                      mov [es:di], ax             ;snake head placed
+   463                                  
+   464 000003B5 8B4E08                      mov cx, [bp + 8]            ;snake length
+   465 000003B8 8B3F                        mov di, [bx]
+   466 000003BA 46                          inc si
+   467 000003BB B404                        mov ah, 0x04
+   468 000003BD 8A04                        mov al, [si]
+   469 000003BF 268905                      mov [es:di],ax
+   470                                      right_location_sort:
+   471 000003C2 8B07                            mov ax, [bx]
+   472 000003C4 8917                            mov [bx], dx
+   473 000003C6 89C2                            mov dx, ax
+   474 000003C8 81C30200                        add bx, 2
+   475                                          
+   476 000003CC E2F4                            loop right_location_sort
+   477 000003CE 89D7                        mov di, dx
+   478 000003D0 B82007                      mov ax, 0x0720
+   479 000003D3 268905                      mov [es:di], ax
+   480                                  
+   481                                      no_right_movement:
+   482 000003D6 5E                          pop si
+   483 000003D7 5F                          pop di
+   484 000003D8 07                          pop es
+   485 000003D9 5A                          pop dx
+   486 000003DA 59                          pop cx
+   487 000003DB 5B                          pop bx
+   488 000003DC 58                          pop ax
+   489 000003DD 5D                          pop bp
+   490 000003DE C20600                      ret 6
+   491                                  ;///////////////////////////////////////////////////////////////////////////////////
+   492                                  
+   493                                  play_game:
+   494 000003E1 E856FD                      call clearscreen
+   495 000003E4 E874FD                      call welcomeMsg
+   496 000003E7 B400                        mov ah,00
+   497 000003E9 CD16                        int 16h
+   498 000003EB E84CFD                      call clearscreen
+   499 000003EE E8AAFD                      call Instruction
+   500 000003F1 B400                        mov ah,00
+   501 000003F3 CD16                        int 16h
+   502                                  
+   503 000003F5 E842FD                      call clearscreen
+   504 000003F8 E8F400                      call draw_border
+   505                                  
+   506 000003FB FF36[3801]                  push word [snake_length]
+   507 000003FF BB[3301]                    mov bx, snake
+   508 00000402 53                          push bx
+   509 00000403 BB[AE05]                    mov bx, snake_locations
+   510 00000406 53                          push bx
+   511 00000407 E8E4FD                      call draw_snake
+   512 0000040A E88B00                      call displayFood
+   513                                  
+   514                                      repeat:
+   515                                      
+   516 0000040D E814FE                      call printScore
+   517 00000410 B400                        mov ah,0
+   518 00000412 CD16                        int 0x16
+   519 00000414 80FC48                      cmp ah,0x48
+   520 00000417 7418                        je up
+   521 00000419 80FC4B                      cmp ah,0x4B
+   522 0000041C 7437                        je left
+   523 0000041E 80FC4D                      cmp ah,0x4D
+   524 00000421 7444                        je right
+   525 00000423 80FC50                      cmp ah,0x50
+   526 00000426 741B                        je down
+   527 00000428 80FC01                      cmp ah,1
+   528 0000042B 75E0                        jne repeat      
+   529 0000042D B44C                        mov ah,0x4c
+   530 0000042F 7464                        je exit
+   531                                      up:
+   532 00000431 FF36[3801]                      push word [snake_length]
+   533 00000435 BB[3301]                        mov bx, snake
+   534 00000438 53                              push bx
+   535 00000439 BB[AE05]                        mov bx, snake_locations
+   536 0000043C 53                              push bx
+   537 0000043D E86FFE                          call move_snake_up
+   538 00000440 E93300                   		jmp new
+   539                                  
+   540                                  
+   541                                      down:
+   542 00000443 FF36[3801]                      push word [snake_length]
+   543 00000447 BB[3301]                        mov bx, snake
+   544 0000044A 53                              push bx
+   545 0000044B BB[AE05]                        mov bx, snake_locations
+   546 0000044E 53                              push bx
+   547 0000044F E8C3FE                          call move_snake_down
+   548 00000452 E92100                  		jmp new
+   549                                  
+   550                                  
+   551                                      left:
+   552 00000455 FF36[3801]                      push word [snake_length]
+   553 00000459 BB[3301]                        mov bx, snake
+   554 0000045C 53                              push bx
+   555 0000045D BB[AE05]                        mov bx, snake_locations
+   556 00000460 53                              push bx
+   557 00000461 E8E5FD                          call move_snake_left
+   558 00000464 E90F00                  		jmp new
+   559                                  
+   560                                      right:
+   561 00000467 FF36[3801]                      push word [snake_length]
+   562 0000046B BB[3301]                        mov bx, snake
+   563 0000046E 53                              push bx
+   564 0000046F BB[AE05]                        mov bx, snake_locations
+   565 00000472 53                              push bx
+   566 00000473 E805FF                          call move_snake_right
+   567                                  	new:
+   568 00000476 E8CE00                           call check_death
+   569                                          
+   570 00000479 50                                push ax
+   571 0000047A A1[0700]                          mov ax,word[foodpos]
+   572 0000047D 3B06[AE05]                        cmp ax,[snake_locations]
+   573 00000481 750E                              jne f
+   574 00000483 E81200                            call displayFood
+   575 00000486 8106[3801]0100                    add word[snake_length],1
+   576 0000048C 8006[2B01]01                      add byte[currScore],1
+   577                                  
+   578                                          f:
+   579 00000491 58                                  pop ax
+   580 00000492 E978FF                          jmp repeat
+   581                                      exit:
+   582 00000495 5B                              pop bx
+   583 00000496 58                              pop ax
+   584 00000497 C3                              ret
+   585                                  
+   586                                  ;////////////////////////////////////////////////////////////////////////////////
+   587                                  displayFood:
+   588 00000498 53                          push bx
+   589 00000499 50                          push ax
+   590 0000049A 51                          push cx
+   591 0000049B 52                          push dx
+   592 0000049C 06                          push es
+   593 0000049D 57                          push di
+   594                                  
+   595                                    l1:
+   596 0000049E B400                        MOV AH, 00h  ; interrupts to get system time        
+   597 000004A0 CD1A                        INT 1AH      ; CX:DX now hold number of clock ticks since midnight      
+   598                                  
+   599 000004A2 89D0                        mov  ax, dx
+   600 000004A4 31D2                        xor  dx, dx
+   601 000004A6 B91900                      mov  cx, 25    
+   602 000004A9 F7F1                        div  cx      
+   603                                  
+   604 000004AB 8916[0300]                  mov word[x_pos],dx
+   605                                  
+   606 000004AF B400                        MOV AH, 00h  ; interrupts to get system time        
+   607 000004B1 CD1A                        INT 1AH      ; CX:DX now hold number of clock ticks since midnight      
+   608                                  
+   609 000004B3 89D0                        mov  ax, dx
+   610 000004B5 31D2                        xor  dx, dx
+   611 000004B7 B95000                      mov  cx, 80    
+   612 000004BA F7F1                        div  cx       ; here dx contains the remainder of the division - from 0 to 9
+   613                                  
+   614 000004BC 8916[0500]                  mov word[y_pos],dx
+   615                                  
+   616 000004C0 A1[0300]                    mov ax,[x_pos]
+   617 000004C3 BB5000                      mov bx,80
+   618 000004C6 F7E3                        mul bx
+   619 000004C8 0306[0500]                  add ax,[y_pos]
+   620 000004CC D1E0                        shl ax,1
+   621 000004CE 3D000F                      cmp ax,3840
+   622 000004D1 7FCB                     jg l1
+   623 000004D3 3DA000                      cmp ax,160
+   624 000004D6 72C6                        jb l1
+   625                                  
+   626 000004D8 A3[0700]                    mov word[foodpos],ax
+   627 000004DB 89C7                        mov di,ax
+   628 000004DD B800B8                      mov ax,0xb800
+   629 000004E0 8EC0                        mov es,ax
+   630 000004E2 B82A07                      mov ax,0x072A
+   631 000004E5 268905                      mov [es:di],ax
+   632                                  
+   633                                  
+   634 000004E8 5F                          pop di
+   635 000004E9 07                          pop es
+   636 000004EA 5A                          pop dx
+   637 000004EB 59                          pop cx
+   638 000004EC 58                          pop ax
+   639 000004ED 5B                          pop bx
+   640 000004EE C3                          ret
+   641                                  
+   642                                  
+   643                                  ;////////////////////////////////////////////////////////////////////////////////////
+   644                                  draw_border:
+   645 000004EF 50                      	push ax
+   646 000004F0 53                      	push bx
+   647 000004F1 06                      	push es
+   648 000004F2 57                      	push di
+   649 000004F3 56                      	push si
+   650 000004F4 51                      	push cx
+   651                                  
+   652 000004F5 B800B8                  	mov ax,0xb800
+   653 000004F8 8EC0                    	mov es,ax
+   654 000004FA BF0000                  	mov di,0
+   655                                  
+   656 000004FD B95000                  	mov cx,80
+   657 00000500 B402                    	mov ah,0x02
+   658 00000502 B03D                    	mov al,'='
+   659                                  	top_border:
+   660 00000504 268905                  		mov [es:di],ax
+   661 00000507 81C70200                		add di,2
+   662 0000050B E2F7                    		loop top_border
+   663                                  
+   664 0000050D B95000                  	mov cx,80
+   665 00000510 BF000F                  	mov di,3840
+   666 00000513 B03D                    	mov al,'='
+   667                                  	bottom_border:
+   668 00000515 268905                  		mov [es:di],ax
+   669 00000518 81C70200                		add di,2
+   670 0000051C E2F7                    		loop bottom_border
+   671                                  
+   672 0000051E B91800                  	mov cx,24
+   673 00000521 B07C                    	mov al,'|'
+   674 00000523 BFA000                  	mov di,160
+   675                                  	left_border:
+   676 00000526 268905                  		mov [es:di],ax
+   677 00000529 81C7A000                		add di,160
+   678 0000052D E2F7                    		loop left_border
+   679                                  
+   680 0000052F B91800                  	mov cx,24
+   681 00000532 B07C                    	mov al,'|'
+   682 00000534 BF9E00                  	mov di,158
+   683                                  	right_border:
+   684 00000537 268905                  		mov [es:di],ax
+   685 0000053A 81C7A000                		add di,160
+   686 0000053E E2F7                    		loop right_border
+   687                                  
+   688 00000540 59                      	pop cx
+   689 00000541 5E                      	pop si
+   690 00000542 5F                      	pop di
+   691 00000543 07                      	pop es
+   692 00000544 5B                      	pop bx
+   693 00000545 58                      		pop ax
+   694 00000546 C3                          ret
+   695                                  ;/////////////////////////////////////////////////////////////////////////////////////
+   696                                  
+   697                                  check_death:
+   698 00000547 50                          push ax
+   699 00000548 57                          push di
+   700 00000549 51                          push cx
+   701                                  
+   702 0000054A A1[AE05]                    mov ax, [snake_locations]
+   703 0000054D 3DA000                      cmp ax, 160
+   704 00000550 7222                        jb finished
+   705 00000552 BFA000                      mov di, 160              
+   706 00000555 B91800                      mov cx, 24
+   707                                  
+   708                                      check1: 
+   709 00000558 39F8                            cmp ax, di
+   710 0000055A 7418                            je finished
+   711 0000055C 81C79E00                        add di, 158
+   712 00000560 39F8                            cmp ax, di
+   713 00000562 7410                            je finished
+   714 00000564 81C70200                        add di, 2
+   715                                  
+   716 00000568 E2EE                            loop check1 
+   717                                      
+   718 0000056A BF000F                      mov di,3840
+   719 0000056D 39F8                        cmp ax, di
+   720 0000056F 7703                        ja finished
+   721 00000571 E90300                      jmp else
+   722                                  
+   723                                      finished:
+   724 00000574 E80400                      call over
+   725                                      else:
+   726 00000577 59                              pop cx
+   727 00000578 5F                              pop di
+   728 00000579 58                              pop ax
+   729 0000057A C3                          ret
+   730                                  ;///////////////////////////////////////////////////////////////////////
+   731                                  over:
+   732 0000057B 55                          push bp
+   733 0000057C 89E5                        mov bp,sp
+   734 0000057E 50                          push ax
+   735 0000057F 53                          push bx
+   736 00000580 51                          push cx
+   737 00000581 06                          push es
+   738 00000582 56                          push si
+   739 00000583 57                          push di
+   740 00000584 E8B3FB                          call clearscreen
+   741 00000587 B800B8                          mov ax,0xb800
+   742 0000058A B404                            mov ah,0x04
+   743 0000058C BE[2201]                        mov si,GameOver
+   744 0000058F B90900                          mov cx,9
+   745 00000592 BFE605                          mov di,1510
+   746                                          printMsg:
+   747 00000595 AC                                  lodsb
+   748 00000596 AB                                  stosw
+   749 00000597 E2FC                                loop printMsg
+   750 00000599 5F                          pop di
+   751 0000059A 5E                          pop si
+   752 0000059B 07                          pop es
+   753 0000059C 59                          pop cx
+   754 0000059D 5B                          pop bx
+   755 0000059E 58                          pop ax
+   756 0000059F 5D                          pop bp
+   757 000005A0 B8004C                      mov ax, 0x4c00
+   758 000005A3 CD21                        int 0x21
+   759 000005A5 C3                          ret
+   760                                  ;/////////////////////////////////////////////////////////////////////////////////////
+   761                                  
+   762                                  start:
+   763 000005A6 E838FE                  call play_game
+   764 000005A9 B8004C                  mov ax,0x4c00
+   765 000005AC CD21                    int 0x21
+   766 000005AE 0000                    snake_locations: dw 0
