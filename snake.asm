@@ -13,6 +13,8 @@ currScore: db '0'
 score: db 'Score: '
 snake: db 02,'*','*','*','*'
 snake_length: dw 5
+move: db 0x4B
+delaytime: dd 0
 ;-----------------------------------------------------------------------------------
 clearscreen:
     push es
@@ -36,7 +38,6 @@ clearscreen:
     pop es
     ret
 ;-----------------------------------------------------------------------------------
-
 welcomeMsg:
 	push ax
 	push bx
@@ -81,7 +82,6 @@ welcomeMsg:
 	pop ax
     ret
 ;-----------------------------------------------------------------------------------
-
 Instruction:
 	push ax
 	push bx
@@ -137,7 +137,6 @@ Instruction:
 	pop ax
  ret
 ;-----------------------------------------------------------------------------------
-
 draw_snake:
     push bp
     mov bp, sp
@@ -173,8 +172,9 @@ draw_snake:
     pop bp
     ret 6
 ;-----------------------------------------------------------------------------------
-
 printScore:
+    push bp
+    mov bp,sp
     push ax
     push bx
     push cx
@@ -182,10 +182,15 @@ printScore:
     push di
     push es
 
+    cmp byte[currScore], 58
+    jne s
+
+    mov byte[currScore],'A'
+    s:
     mov si,score
     mov ax,0xb800
     mov ah,0x07
-    mov di,164
+    mov di,[bp+4]
     mov cx,7
     p:
         lodsb
@@ -200,7 +205,8 @@ printScore:
     pop cx
     pop bx
     pop ax
-    ret
+    pop bp
+    ret 2
 ;-----------------------------------------------------------------------------------
 move_snake_left:
     push bp
@@ -469,7 +475,7 @@ move_snake_right:
     pop ax
     pop bp
     ret 6
-
+;-----------------------------------------------------------------------------------
 check_death:
     push ax
     push di
@@ -503,9 +509,7 @@ check_death:
         pop di
         pop ax
     ret
-
 ;-----------------------------------------------------------------------------------
-
 play_game:
     call clearscreen
     call welcomeMsg
@@ -528,10 +532,18 @@ play_game:
     call displayFood
 
     repeat:
-    
+        push 164
     call printScore
-    mov ah,0
-    int 0x16
+    mov dword[delaytime],15000
+
+    delay:
+        dec dword[delaytime]
+        cmp dword[delaytime],0
+        jne delay
+
+    mov ah,00
+    INT 0X16
+
     cmp ah,0x48
     je up
     cmp ah,0x4B
@@ -541,6 +553,7 @@ play_game:
     cmp ah,0x50
     je down
     cmp ah,1
+
     jne repeat      
     mov ah,0x4c
     je exit
@@ -599,7 +612,6 @@ play_game:
         pop ax
         ret
 ;-----------------------------------------------------------------------------------
-
 displayFood:
     push  bp
     push bx
@@ -659,7 +671,6 @@ displayFood:
     pop bp
     ret
 ;-----------------------------------------------------------------------------------
-
 draw_border:
 	push ax
 	push bx
@@ -712,7 +723,6 @@ draw_border:
 		pop ax
     ret
 ;-----------------------------------------------------------------------------------
-
 over:
     push bp
     mov bp,sp
@@ -731,6 +741,8 @@ over:
             lodsb
             stosw
             loop printMsg
+    push 1670
+    call printScore
     pop di
     pop si
     pop es
@@ -742,7 +754,6 @@ over:
     int 0x21
     ret
 ;-----------------------------------------------------------------------------------
-
 start:
 call play_game
 mov ax,0x4c00
