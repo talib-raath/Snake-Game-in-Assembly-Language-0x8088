@@ -18,8 +18,3 @@ Use the following command to compile the assembly code:
 
 ```bash
 nasm filename.asm -o filename.com -l filename.lst
-
-
-a)![image](https://user-images.githubusercontent.com/107783888/206681650-a2715d6b-92a7-430a-bcbf-6ad35e1baf89.png)
-
-b)![image](https://user-images.githubusercontent.com/107783888/206681730-aaacd603-1d8b-4c8d-80ad-05275f564262.png)
